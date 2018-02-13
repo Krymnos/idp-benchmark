@@ -11,23 +11,27 @@ import datetime
 
 cluster = Cluster(['122.129.79.66'],port=9042)
 #cluster = Cluster()
-session = cluster.connect("provenancekeytest")
+session = cluster.connect("provenancekeybenchmark")
+timepair = {}
 
 def findNodeFailure():
 	start = time.time()
 	rows = session.execute("SELECT * FROM node")
 	for node_row in rows:
-		node1Active = False
 		heartBeatRows = session.execute("SELECT * FROM heartbeat where id='"+node_row.id+"'")
 		for heartbeat_row in heartBeatRows:
 			if heartbeat_row.id == node_row.id:
-				d1 = heartbeat_row.pldaemon
-				d2 = datetime.datetime.now()
-				node1Active = True
-		if node1Active == False:
-			print("Daemon on node "+node_row.id+" may have failed.")
-		else:
-			print("Daemon on node "+node_row.id+" active before "+str(d2-d1))
+				if str(heartbeat_row.id) in timepair:
+					a = timepair[str(heartbeat_row.id)]
+					b = a + datetime.timedelta(0,30)
+					if heartbeat_row.pldaemon > b:
+						print("Pipeline Daemon on node "+node_row.id+" active.")
+					else:
+						print("Pipeline Daemon on node "+node_row.id+" failed.")
+				else:
+					print("Pipeline Daemon on node "+node_row.id+" active.")
+				timepair[str(heartbeat_row.id)] = heartbeat_row.pldaemon
+	time.sleep(30)
 	end = time.time()
 	print("Total Time taken: " + str(end - start))
 
@@ -48,7 +52,7 @@ def plotTC(fn, nMin, nMax, nInc, nTests):
 def main():
     print('Analyzing Provenance system for link failures...')
 
-    plotTC(findNodeFailure, 10, 1000, 10, 10)
+    plotTC(findNodeFailure, 0, 216000, 60, 1)
     pyplot.show()
 
 # call main
