@@ -52,7 +52,7 @@ def plotTC(fn, nMin, nMax, nInc, nTests):
 def main():
     print('Analyzing Provenance system for link failures...')
 
-    plotTC(findNodeFailure, 0, 36000, 60, 1)
+    plotTC(findNodeFailure, 0, 216000, 60, 1)
     pyplot.show()
 
 # call main
