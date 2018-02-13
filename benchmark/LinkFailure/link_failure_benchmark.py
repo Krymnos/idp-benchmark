@@ -51,7 +51,7 @@ def findLinkFailure():
 			print("Link active between "+node_row.id+" and "+node_row.successor)
 		elif nodeLinkActive == False:
 			print("Link broken between "+node_row.id+" and "+node_row.successor)
-	time.sleep(30)
+	#time.sleep(30)
 	end = time.time()
 	print("Total Time taken: " + str(end - start))
 

@@ -31,7 +31,7 @@ def findNodeFailure():
 				else:
 					print("Node "+node_row.id+" active.")
 				timepair[str(heartbeat_row.id)] = heartbeat_row.time
-	time.sleep(30)
+	#time.sleep(30)
 	end = time.time()
 	print("Total Time taken: " + str(end - start))
 
@@ -52,7 +52,7 @@ def plotTC(fn, nMin, nMax, nInc, nTests):
 def main():
     print('Analyzing Provenance system for link failures...')
 
-    plotTC(findNodeFailure, 60, 36000, 60, 1)
+    plotTC(findNodeFailure, 0, 36000, 60, 1)
     pyplot.show()
 
 # call main
