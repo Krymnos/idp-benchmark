@@ -51,7 +51,7 @@ def findLinkFailure():
 			print("Link active between "+node_row.id+" and "+node_row.successor)
 		elif nodeLinkActive == False:
 			print("Link broken between "+node_row.id+" and "+node_row.successor)
-	#time.sleep(30)
+	time.sleep(30)
 	end = time.time()
 	print("Total Time taken: " + str(end - start))
 
@@ -72,7 +72,7 @@ def plotTC(fn, nMin, nMax, nInc, nTests):
 def main():
     print('Analyzing Provenance system for link failures...')
 
-    plotTC(findLinkFailure, 60, 36000, 60, 1)
+    plotTC(findLinkFailure, 0, 216000, 60, 1)
     pyplot.show()
 
 # call main

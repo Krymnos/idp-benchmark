@@ -29,7 +29,7 @@ def findNodeFailure():
 					else:
 						print("Pipeline Daemon on node "+node_row.id+" failed.")
 				else:
-					print("Pipeline Daemon on node "+node_row.id+" active.")
+					print("Initializing...")
 				timepair[str(heartbeat_row.id)] = heartbeat_row.pldaemon
 	time.sleep(30)
 	end = time.time()

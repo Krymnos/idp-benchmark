@@ -12,27 +12,24 @@ import datetime
 cluster = Cluster(['122.129.79.66'],port=9042)
 #cluster = Cluster()
 session = cluster.connect("provenancekeybenchmark")
-timepair = {}
-
+datapair = {}
 def findNodeFailure():
 	start = time.time()
 	rows = session.execute("SELECT * FROM node")
 	for node_row in rows:
-		heartBeatRows = session.execute("SELECT * FROM heartbeat where id='"+node_row.id+"'")
-		for heartbeat_row in heartBeatRows:
-			if heartbeat_row.id == node_row.id:
-				if str(heartbeat_row.id) in timepair:
-					a = timepair[str(heartbeat_row.id)]
-					b = a + datetime.timedelta(0,30)
-					if heartbeat_row.time > b:
-						print("Node "+node_row.id+" active.")
+		countRows = session.execute("select count(*) from provenancetable where nodeid='"+node_row.id+"' allow filtering")
+		for count_row in countRows:
+				if  node_row.id in datapair:
+					a = datapair[node_row.id]
+					if count_row.count > a:
+						print("Provenance Daemon in Node "+node_row.id+" active.")
 					else:
-						print("Node "+node_row.id+" failed.")
+						print("Provenance Daemon in Node "+node_row.id+" failed.")
 				else:
 					print("Initializing...")
-				timepair[str(heartbeat_row.id)] = heartbeat_row.time
-	time.sleep(30)
+				datapair[node_row.id] = count_row.count
 	end = time.time()
+	time.sleep(10)
 	print("Total Time taken: " + str(end - start))
 
 #while True:
