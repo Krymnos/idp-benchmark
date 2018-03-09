@@ -2,18 +2,19 @@ import json
 import urllib2
 from cassandra.cluster import Cluster
 import time
-from matplotlib import pyplot
+#from matplotlib import pyplot
 import numpy as np
 import timeit
 from functools import partial
 import random
 import datetime
+from sys import argv
 
-cluster = Cluster(['122.129.79.66'],port=9042)
+cluster = Cluster([argv[2]],port=9042)
 #cluster = Cluster()
-session = cluster.connect("provenancekeybenchmark")
+session = cluster.connect("provenancekey")
 datapair = {}
-def findNodeFailure():
+def findProvenanceFailure():
 	start = time.time()
 	rows = session.execute("SELECT * FROM node")
 	for node_row in rows:
@@ -28,8 +29,9 @@ def findNodeFailure():
 				else:
 					print("Initializing...")
 				datapair[node_row.id] = count_row.count
+	#end = time.time()
+	#time.sleep(5)
 	end = time.time()
-	time.sleep(10)
 	print("Total Time taken: " + str(end - start))
 
 #while True:
@@ -44,13 +46,16 @@ def plotTC(fn, nMin, nMax, nInc, nTests):
         t = testNTimer.timeit(number=nTests)
         x.append(i)
         y.append(t)
-    p1 = pyplot.plot(x, y, 'o')
+        f = open("results/provenancefailure.txt","a")
+        f.write(str(i)+","+str(t)+"\n")
+        f.close()
+    #p1 = pyplot.plot(x, y, 'o')
 
 def main():
-    print('Analyzing Provenance system for link failures...')
+    print('Analyzing Provenance system for Provenance Daemon failures...')
 
-    plotTC(findNodeFailure, 0, 216000, 60, 1)
-    pyplot.show()
+    plotTC(findProvenanceFailure, 0, 216, 60, 1)
+    #pyplot.show()
 
 # call main
 if __name__ == '__main__':
