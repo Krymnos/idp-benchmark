@@ -1,0 +1,96 @@
+version: '3'
+
+# This is triangle topology for having two nodes sending pushing datapoints to one endpoint
+# Also known as triangle topology with two nodes
+
+# Parameter used : meterid,metricid,app,ctime,stime,rtime
+
+volumes:
+    provenancesensordata:
+        external: true
+
+services:
+    cassandra:
+        image: cassandra:latest
+        ports:
+            - "9042:9042"
+        deploy:
+          placement:
+            constraints:
+              - engine.labels.availability_zone == eu-central-1c
+
+    idprovider:
+        image: cloudproto/idprovider:latest
+        environment:
+            - START_ID=31400010000000000
+
+    sensorGroupA:
+            image: cloudproto/sensor:latest
+            volumes:
+                - provenancesensordata:/mnt
+            environment:
+                - SENSOR_PARAMETERS=-sourceFolder data/20170210 -frequency 1000 -targetAddress gatewayA:50051 -targetType grpc-pipeline
+                - STARTUP_DELAY=30
+            deploy:
+              placement:
+                constraints:
+                  - engine.labels.availability_zone == eu-central-1a
+
+    sensorGroupB:
+            image: cloudproto/sensor:latest
+            volumes:
+                - provenancesensordata:/mnt
+            environment:
+                - SENSOR_PARAMETERS=-sourceFolder data/20170210 -frequency 1000 -targetAddress gatewayB:50051 -targetType grpc-pipeline
+                - STARTUP_DELAY=30
+            deploy:
+              placement:
+                constraints:
+                  - engine.labels.availability_zone == eu-central-1b
+
+    gatewayA:
+        image: cloudproto/pipeline_component:latest
+        environment:
+            - CASSANDRA_HOST=cassandra
+            - NODE_ID=000001
+            - NODE_NAME=gatewayA
+            - ARGUMENTS=--port 50051 --host_next endpoint --port_next 50051
+            - STARTUP_DELAY=20
+            - BUFFER_CAPACITY=10
+            - SUCCESSOR=000005
+            - METRICS=meterid,metricid,app,ctime,stime,rtime
+        deploy:
+          placement:
+            constraints:
+              - engine.labels.availability_zone == eu-central-1b
+    
+    gatewayB:
+        image: cloudproto/pipeline_component:latest
+        environment:
+            - CASSANDRA_HOST=cassandra
+            - NODE_ID=000002
+            - NODE_NAME=gatewayB
+            - ARGUMENTS=--port 50051 --host_next endpoint --port_next 50051
+            - STARTUP_DELAY=20
+            - BUFFER_CAPACITY=10
+            - SUCCESSOR=000005
+            - METRICS=meterid,metricid,app,ctime,stime,rtime
+        deploy:
+          placement:
+            constraints:
+              - engine.labels.availability_zone == eu-central-1c
+
+    endpoint:
+        image: cloudproto/pipeline_component:latest
+        environment:
+            - CASSANDRA_HOST=cassandra
+            - STARTUP_DELAY=20
+            - ARGUMENTS=--port 50051
+            - NODE_ID=000003
+            - NODE_NAME=endpoint
+            - BUFFER_CAPACITY=10
+            - METRICS=meterid,metricid,app,ctime,stime,rtime
+        deploy:
+          placement:
+            constraints:
+              - engine.labels.availability_zone == eu-central-1a

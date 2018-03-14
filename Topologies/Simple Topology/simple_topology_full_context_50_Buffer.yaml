@@ -1,0 +1,67 @@
+version: '3'
+
+# This is simple topology for having a base scenario for overhead benchmark where 
+# we have one sensor sending data to single gateway which propogates the data to the endpoint. 
+# Also known as line topolog with two nodes
+
+volumes:
+    provenancesensordata:
+        external: true
+
+services:
+    cassandra:
+        image: cassandra:latest
+        ports:
+            - "9042:9042"
+        deploy:
+          placement:
+            constraints:
+              - engine.labels.availability_zone == eu-central-1c
+
+    idprovider:
+        image: cloudproto/idprovider:latest
+        environment:
+            - START_ID=31400010000000000
+
+    sensorGroupA:
+            image: cloudproto/sensor:latest
+            volumes:
+                - provenancesensordata:/mnt
+            environment:
+                - SENSOR_PARAMETERS=-sourceFolder data/20170210 -frequency 1000 -targetAddress gatewayA:50051 -targetType grpc-pipeline
+                - STARTUP_DELAY=30
+            deploy:
+              placement:
+                constraints:
+                  - engine.labels.availability_zone == eu-central-1a
+
+    gatewayA:
+        image: cloudproto/pipeline_component:latest
+        environment:
+            - CASSANDRA_HOST=cassandra
+            - NODE_ID=000001
+            - NODE_NAME=gatewayA
+            - ARGUMENTS=--port 50051 --host_next endpoint --port_next 50051
+            - STARTUP_DELAY=20
+            - BUFFER_CAPACITY=50
+            - SUCCESSOR=000005
+            - METRICS=meterid,metricid,loc,line,class,app,ctime,stime,rtime
+        deploy:
+          placement:
+            constraints:
+              - engine.labels.availability_zone == eu-central-1b
+
+    endpoint:
+        image: cloudproto/pipeline_component:latest
+        environment:
+            - CASSANDRA_HOST=cassandra
+            - STARTUP_DELAY=20
+            - ARGUMENTS=--port 50051
+            - NODE_ID=000002
+            - NODE_NAME=endpoint
+            - BUFFER_CAPACITY=50
+            - METRICS=meterid,metricid,loc,line,class,app,ctime,stime,rtime
+        deploy:
+          placement:
+            constraints:
+              - engine.labels.availability_zone == eu-central-1a
